@@ -92,6 +92,48 @@ def generate_order_number():
         if not Order.query.filter_by(order_number=order_number).first():
             return order_number
 
+def generate_cocktail_name(spirits, taste_types, mood):
+    name_prompt = f"""Génère un nom de cocktail fantastique et unique en te basant sur ces éléments :
+- Alcools : {', '.join(spirits)}
+- Goûts : {', '.join(taste_types)}
+- Humeur : {mood}
+
+Le nom doit être :
+- Inspiré par la fantasy et la science-fiction (dragons, licornes, elfes, magie, etc.)
+- Court et mémorable
+- Refléter les caractéristiques du cocktail
+- Un seul nom, pas de liste ni d'alternatives
+
+Exemples de noms fantastiques :
+- Le Phénix Enflammé
+- L'Élixir des Elfes
+- Le Dragon de Cristal
+- La Larme de Licorne
+- Le Sortilège des Sages
+
+Réponds uniquement avec le nom du cocktail, sans explication ni ponctuation supplémentaire."""
+
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Tu es un expert en création de noms de cocktails fantastiques. Tu ne donnes qu'un seul nom par réponse."},
+            {"role": "user", "content": name_prompt}
+        ],
+        max_tokens=50,  # Limite le nombre de tokens pour éviter les réponses trop longues
+        temperature=0.7
+    )
+    
+    # Nettoie la réponse pour s'assurer qu'il n'y a qu'un seul nom
+    name = response.choices[0].message.content.strip()
+    # Supprime toute ponctuation en fin de ligne
+    name = name.rstrip('.,!?')
+    # Supprime les numéros ou tirets au début
+    name = name.lstrip('0123456789.- ')
+    # Supprime les guillemets
+    name = name.strip('"\'')
+    
+    return name
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
@@ -158,35 +200,7 @@ def index():
                 recipe = response.choices[0].message.content
 
                 # Générer le nom du cocktail
-                name_prompt = f"""Crée un nom créatif et accrocheur pour un cocktail dans un thème FANTASTIQUE avec les caractéristiques suivantes :
-                - Alcool principal : {spirit}
-                - Types de goût : {', '.join(taste_types)}
-                - Humeur : {mood if mood else 'Non spécifiée'}
-
-                Le nom doit être :
-                - Court et mémorable
-                - Inspiré de la fantasy/science-fiction (dragons, licornes, elfes, fées, magie, etc.)
-                - Utiliser des mots comme : mystique, enchanté, légendaire, mythique, céleste, etc.
-                - Refléter les caractéristiques du cocktail
-
-                Exemples de noms dans ce style :
-                - Le Phénix Enflammé
-                - L'Élixir des Elfes
-                - Le Dragon de Cristal
-                - La Potion Mystique
-                - Le Sortilège de la Licorne"""
-
-                name_response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": "system", "content": "Tu es un expert en création de noms de cocktails fantastiques. Crée des noms courts, créatifs et mémorables inspirés de la fantasy et de la science-fiction."},
-                        {"role": "user", "content": name_prompt}
-                    ],
-                    temperature=0.7,
-                    max_tokens=50
-                )
-
-                cocktail_name = name_response.choices[0].message.content.strip()
+                cocktail_name = generate_cocktail_name(selected_spirits, taste_types, mood)
                 cocktails.append({
                     'name': cocktail_name,
                     'spirit': spirit,
