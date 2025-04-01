@@ -98,6 +98,8 @@ def index():
         try:
             customer_name = request.form.get('customer_name')
             alcohol_type = request.form.get('alcohol_type')
+            choose_specific = request.form.get('choose_specific')
+            specific_spirit = request.form.get('specific_spirit')
             base = request.form.get('base')
             taste_types = request.form.getlist('taste_types')
             mood = request.form.get('mood')
@@ -110,9 +112,14 @@ def index():
                 'amere': ['Campari', 'Aperol', 'Fernet', 'Suze', 'Amer Picon']
             }
 
-            # Sélectionner 3 types d'alcools différents
-            available_spirits = alcohol_specifics.get(alcohol_type, ['Spiritueux'])
-            selected_spirits = random.sample(available_spirits, min(3, len(available_spirits)))
+            # Sélectionner les alcools pour les cocktails
+            if choose_specific == 'yes' and specific_spirit:
+                # Si un alcool spécifique est choisi, l'utiliser pour tous les cocktails
+                selected_spirits = [specific_spirit] * 3
+            else:
+                # Sinon, sélectionner 3 types d'alcools différents
+                available_spirits = alcohol_specifics.get(alcohol_type, ['Spiritueux'])
+                selected_spirits = random.sample(available_spirits, min(3, len(available_spirits)))
 
             # Générer 3 propositions de cocktails
             cocktails = []

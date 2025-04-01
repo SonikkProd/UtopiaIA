@@ -26,26 +26,47 @@
             <div class="options-grid">
                 <div class="option-card" onclick="selectOption('alcohol_type', 'blanc', this)">
                     <img src="{{ url_for('static', filename='icons/white-spirits.svg') }}" alt="Alcools blancs">
-                    <span>Alcools Blancs</span>
-                    <small>Vodka, Gin, etc.</small>
+                    <span>Alcools blancs</span>
+                    <small>Vodka, Gin, Rhum blanc...</small>
                 </div>
                 <div class="option-card" onclick="selectOption('alcohol_type', 'brun', this)">
                     <img src="{{ url_for('static', filename='icons/brown-spirits.svg') }}" alt="Alcools bruns">
-                    <span>Alcools Bruns</span>
-                    <small>Whisky, Rhum, etc.</small>
+                    <span>Alcools bruns</span>
+                    <small>Whisky, Rhum brun, Cognac...</small>
                 </div>
                 <div class="option-card" onclick="selectOption('alcohol_type', 'liqueur', this)">
                     <img src="{{ url_for('static', filename='icons/liqueur.svg') }}" alt="Liqueurs">
                     <span>Liqueurs</span>
-                    <small>Baileys, Cointreau, etc.</small>
+                    <small>Amaretto, Baileys, Cointreau...</small>
                 </div>
                 <div class="option-card" onclick="selectOption('alcohol_type', 'amere', this)">
                     <img src="{{ url_for('static', filename='icons/bitter.svg') }}" alt="Amers">
                     <span>Amers</span>
-                    <small>Campari, Aperol, etc.</small>
+                    <small>Campari, Aperol, Fernet...</small>
                 </div>
             </div>
             <input type="hidden" name="alcohol_type" id="alcohol_type">
+
+            <div class="form-group" id="specific_spirit_group" style="display: none;">
+                <h3>Voulez-vous choisir un alcool spécifique ?</h3>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="choose_specific" value="yes"> Oui
+                    </label>
+                    <label>
+                        <input type="radio" name="choose_specific" value="no" checked> Non
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group" id="specific_spirit_select" style="display: none;">
+                <h3>Choisissez votre alcool</h3>
+                <div class="options-grid" id="specific_spirits_grid">
+                    <!-- Les options seront remplies dynamiquement -->
+                </div>
+                <input type="hidden" name="specific_spirit" id="specific_spirit">
+            </div>
+
             <div class="nav-buttons">
                 <button type="button" class="back-btn" onclick="prevStep(2)">Retour</button>
                 <button type="button" class="next-btn" onclick="nextStep(2)">Suivant</button>
@@ -160,6 +181,26 @@ function selectOption(inputId, value, element) {
     
     // Ajouter la classe selected à l'élément cliqué
     element.classList.add('selected');
+
+    // Si c'est le type d'alcool, afficher l'option de sélection spécifique
+    if (inputId === 'alcohol_type') {
+        const specificGroup = document.getElementById('specific_spirit_group');
+        const specificSelect = document.getElementById('specific_spirit_select');
+        specificGroup.style.display = 'block';
+        specificSelect.style.display = 'none';
+    }
+}
+
+function selectSpecificSpirit(value, element) {
+    document.getElementById('specific_spirit').value = value;
+    
+    // Retirer la classe selected de tous les éléments du même groupe
+    element.parentElement.querySelectorAll('.selected').forEach(el => {
+        el.classList.remove('selected');
+    });
+    
+    // Ajouter la classe selected à l'élément cliqué
+    element.classList.add('selected');
 }
 
 function toggleTaste(element, taste) {
@@ -180,6 +221,45 @@ function updateSelectedTastes() {
     container.innerHTML = Array.from(selectedTastes).map(taste => 
         `<span class="taste-tag">${taste}</span>`
     ).join('');
+}
+
+document.querySelectorAll('input[name="choose_specific"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const specificSelect = document.getElementById('specific_spirit_select');
+        if (this.value === 'yes') {
+            specificSelect.style.display = 'block';
+            updateSpiritOptions();
+        } else {
+            specificSelect.style.display = 'none';
+        }
+    });
+});
+
+function updateSpiritOptions() {
+    const alcoholType = document.getElementById('alcohol_type').value;
+    const specificGrid = document.getElementById('specific_spirits_grid');
+    specificGrid.innerHTML = '';
+
+    const spirits = {
+        'blanc': ['Vodka', 'Gin', 'Rhum blanc', 'Tequila', 'Mezcal'],
+        'brun': ['Whisky', 'Rhum brun', 'Cognac', 'Armagnac', 'Bourbon'],
+        'liqueur': ['Amaretto', 'Baileys', 'Cointreau', 'Grand Marnier', 'Kahlua'],
+        'amere': ['Campari', 'Aperol', 'Fernet', 'Suze', 'Amer Picon']
+    };
+
+    if (spirits[alcoholType]) {
+        spirits[alcoholType].forEach(spirit => {
+            const card = document.createElement('div');
+            card.className = 'option-card';
+            card.onclick = () => selectSpecificSpirit(spirit, card);
+            const iconPath = spirit.toLowerCase().replace(/\s+/g, '-');
+            card.innerHTML = `
+                <img src="{{ url_for('static', filename='icons/') }}${iconPath}.svg" alt="${spirit}">
+                <span>${spirit}</span>
+            `;
+            specificGrid.appendChild(card);
+        });
+    }
 }
 </script>
 
@@ -400,6 +480,56 @@ function updateSelectedTastes() {
     .form-step h2 {
         font-size: 2em;
     }
+}
+
+.radio-group {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.radio-group input[type="radio"] {
+    margin: 0;
+}
+
+.form-group {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.form-group h3 {
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    font-size: 1.4em;
+}
+
+.radio-group {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 20px 0;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: var(--text-primary);
+    font-size: 1.1em;
+}
+
+.radio-group input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
 }
 </style>
 {% endblock %} 
