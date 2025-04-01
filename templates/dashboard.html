@@ -12,25 +12,8 @@
         </button>
     </div>
     
-    <div class="orders-grid">
-        {% for order in orders %}
-        <div class="order-card" onclick="showOrderDetails('{{ order.order_number }}')">
-            <div class="order-header">
-                <span class="order-number">#{{ order.order_number }}</span>
-                <span class="order-status {{ order.status }}">{{ order.status }}</span>
-            </div>
-            <div class="order-info">
-                <p class="customer-name">{{ order.customer_name }}</p>
-                <p class="order-time">{{ order.created_at.split('T')[1][:5] }}</p>
-            </div>
-            <div class="order-details">
-                <span class="detail-tag">{{ order.alcohol }}</span>
-                {% if order.base %}
-                <span class="detail-tag">{{ order.base }}</span>
-                {% endif %}
-            </div>
-        </div>
-        {% endfor %}
+    <div class="orders-grid" id="ordersGrid">
+        <!-- Les commandes seront chargées dynamiquement ici -->
     </div>
 </div>
 
@@ -143,14 +126,14 @@ h1 {
     font-weight: 500;
 }
 
-.order-status.en_attente {
-    background: rgba(255, 165, 0, 0.2);
-    color: #FFA500;
+.order-status:not(.completed) {
+    background: #FFA500;
+    color: white;
 }
 
-.order-status.servi {
-    background: rgba(50, 205, 50, 0.2);
-    color: #32CD32;
+.order-status.completed {
+    background: #32CD32;
+    color: white;
 }
 
 .order-info {
@@ -290,25 +273,74 @@ h1 {
 </style>
 
 <script>
-function showOrderDetails(orderNumber) {
-    const modal = document.getElementById('orderModal');
-    const order = {{ orders|tojson|safe }}.find(o => o.order_number === orderNumber);
-    
-    if (order) {
-        document.getElementById('modalOrderNumber').textContent = order.order_number;
-        document.getElementById('modalStatus').textContent = order.status;
-        document.getElementById('modalStatus').className = `order-status ${order.status}`;
-        document.getElementById('modalCustomerName').textContent = order.customer_name;
-        document.getElementById('modalTime').textContent = new Date(order.created_at).toLocaleTimeString();
-        document.getElementById('modalRecipe').innerHTML = order.recipe.replace(/\n/g, '<br>');
-        
-        modal.style.display = 'block';
-    }
+let currentOrderNumber = null;
+let lastOrders = null;
+
+// Fonction pour formater l'heure
+function formatTime(isoString) {
+    const date = new Date(isoString);
+    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 
+// Fonction pour créer une carte de commande
+function createOrderCard(order) {
+    return `
+        <div class="order-card" onclick="showOrderDetails('${order.order_number}')">
+            <div class="order-header">
+                <span class="order-number">#${order.order_number}</span>
+                <span class="order-status ${order.completed ? 'completed' : ''}">${order.completed ? 'Servi' : 'En attente'}</span>
+            </div>
+            <div class="order-info">
+                <p class="customer-name">${order.customer_name}</p>
+                <p class="order-time">${formatTime(order.created_at)}</p>
+            </div>
+            <div class="order-details">
+                <span class="detail-tag">${order.alcohol}</span>
+                ${order.base ? `<span class="detail-tag">${order.base}</span>` : ''}
+            </div>
+        </div>
+    `;
+}
+
+// Fonction pour mettre à jour le tableau de bord
+function updateDashboard() {
+    fetch('/get_orders')
+        .then(response => response.json())
+        .then(orders => {
+            // Vérifier si les commandes ont changé
+            if (JSON.stringify(orders) !== JSON.stringify(lastOrders)) {
+                const ordersGrid = document.getElementById('ordersGrid');
+                ordersGrid.innerHTML = orders.map(createOrderCard).join('');
+                lastOrders = orders;
+            }
+        })
+        .catch(error => console.error('Erreur lors de la mise à jour:', error));
+}
+
+// Fonction pour afficher les détails d'une commande
+function showOrderDetails(orderNumber) {
+    currentOrderNumber = orderNumber;
+    fetch('/get_orders')
+        .then(response => response.json())
+        .then(orders => {
+            const order = orders.find(o => o.order_number === orderNumber);
+            if (order) {
+                document.getElementById('modalOrderNumber').textContent = order.order_number;
+                document.getElementById('modalStatus').textContent = order.completed ? 'Servi' : 'En attente';
+                document.getElementById('modalStatus').className = `order-status ${order.completed ? 'completed' : ''}`;
+                document.getElementById('modalCustomerName').textContent = order.customer_name;
+                document.getElementById('modalTime').textContent = formatTime(order.created_at);
+                document.getElementById('modalRecipe').innerHTML = order.recipe.replace(/\n/g, '<br>');
+                document.getElementById('orderModal').style.display = 'block';
+            }
+        });
+}
+
+// Fonction pour mettre à jour le statut d'une commande
 function updateOrderStatus() {
-    const orderNumber = document.getElementById('modalOrderNumber').textContent;
-    fetch(`/update_status/${orderNumber}`, {
+    if (!currentOrderNumber) return;
+    
+    fetch(`/update_status/${currentOrderNumber}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -317,11 +349,18 @@ function updateOrderStatus() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            location.reload();
+            document.getElementById('orderModal').style.display = 'none';
+            updateDashboard();
+        } else {
+            alert('Erreur lors de la mise à jour du statut : ' + data.message);
         }
+    })
+    .catch(error => {
+        alert('Erreur lors de la mise à jour du statut : ' + error);
     });
 }
 
+// Fonction pour vider toutes les commandes
 function clearAllOrders() {
     if (confirm('Êtes-vous sûr de vouloir supprimer toutes les commandes ? Cette action est irréversible.')) {
         fetch('/clear_all_orders', {
@@ -333,7 +372,7 @@ function clearAllOrders() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                updateDashboard();
             } else {
                 alert('Erreur lors de la suppression des commandes : ' + data.message);
             }
@@ -356,5 +395,11 @@ window.onclick = function(event) {
         modal.style.display = 'none';
     }
 }
+
+// Mise à jour initiale
+updateDashboard();
+
+// Mise à jour automatique toutes les 5 secondes
+setInterval(updateDashboard, 5000);
 </script>
 {% endblock %} 

@@ -102,83 +102,149 @@ def index():
             taste_types = request.form.getlist('taste_types')
             mood = request.form.get('mood')
 
-            # Générer la recette avec OpenAI
-            prompt = f"""Crée une recette de cocktail avec les spécifications suivantes :
-            - Type d'alcool : {alcohol_type}
-            - Alcool spécifique : {base if base else 'Non spécifié'}
-            - Types de goût : {', '.join(taste_types)}
-            - Humeur : {mood if mood else 'Non spécifiée'}
+            # Définir les types d'alcools spécifiques selon la catégorie
+            alcohol_specifics = {
+                'blanc': ['Vodka', 'Gin', 'Rhum blanc', 'Tequila', 'Mezcal'],
+                'brun': ['Whisky', 'Rhum brun', 'Cognac', 'Armagnac', 'Bourbon'],
+                'liqueur': ['Amaretto', 'Baileys', 'Cointreau', 'Grand Marnier', 'Kahlua'],
+                'amere': ['Campari', 'Aperol', 'Fernet', 'Suze', 'Amer Picon']
+            }
 
-            Format de la recette :
-            🍸 Nom du cocktail
-            🥃 Ingrédients :
-            - Liste des ingrédients avec quantités
-            🧪 Préparation :
-            - Étapes de préparation
-            🎯 Conseils de service :
-            - Conseils pour servir le cocktail
-            👅 Note de dégustation :
-            - Description du goût et des sensations"""
+            # Sélectionner 3 types d'alcools différents
+            available_spirits = alcohol_specifics.get(alcohol_type, ['Spiritueux'])
+            selected_spirits = random.sample(available_spirits, min(3, len(available_spirits)))
 
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "Tu es un expert en cocktails créatifs. Crée des recettes détaillées et bien formatées avec des emojis."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=500
-            )
+            # Générer 3 propositions de cocktails
+            cocktails = []
+            for spirit in selected_spirits:
+                # Générer la recette avec OpenAI
+                prompt = f"""Crée une recette de cocktail avec les spécifications suivantes :
+                - Type d'alcool principal : {spirit}
+                - Types de goût : {', '.join(taste_types)}
+                - Humeur : {mood if mood else 'Non spécifiée'}
 
-            recipe = response.choices[0].message.content
+                Format de la recette :
+                🍸 Nom du cocktail
+                🥃 Ingrédients :
+                - Liste détaillée des ingrédients avec quantités précises
+                🧪 Préparation :
+                - Étapes de préparation détaillées
+                🎯 Conseils de service :
+                - Type de verre recommandé
+                - Garniture suggérée
+                - Température de service
+                👅 Note de dégustation :
+                - Description détaillée du goût et des sensations
+                - Force de l'alcool (1-5)
+                - Complexité de la recette (1-5)"""
 
-            # Générer le nom du cocktail
-            name_prompt = f"""Crée un nom créatif et accrocheur pour un cocktail avec les caractéristiques suivantes :
-            - Type d'alcool : {alcohol_type}
-            - Alcool spécifique : {base if base else 'Non spécifié'}
-            - Types de goût : {', '.join(taste_types)}
-            - Humeur : {mood if mood else 'Non spécifiée'}
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "Tu es un expert en cocktails créatifs. Crée des recettes détaillées et bien formatées avec des emojis."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=500
+                )
 
-            Le nom doit être court, mémorable et refléter les caractéristiques du cocktail."""
+                recipe = response.choices[0].message.content
 
-            name_response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "Tu es un expert en création de noms de cocktails. Crée des noms courts, créatifs et mémorables."},
-                    {"role": "user", "content": name_prompt}
-                ],
-                temperature=0.7,
-                max_tokens=50
-            )
+                # Générer le nom du cocktail
+                name_prompt = f"""Crée un nom créatif et accrocheur pour un cocktail dans un thème FANTASTIQUE avec les caractéristiques suivantes :
+                - Alcool principal : {spirit}
+                - Types de goût : {', '.join(taste_types)}
+                - Humeur : {mood if mood else 'Non spécifiée'}
 
-            cocktail_name = name_response.choices[0].message.content.strip()
-            order_number = generate_order_number()
+                Le nom doit être :
+                - Court et mémorable
+                - Inspiré de la fantasy/science-fiction (dragons, licornes, elfes, fées, magie, etc.)
+                - Utiliser des mots comme : mystique, enchanté, légendaire, mythique, céleste, etc.
+                - Refléter les caractéristiques du cocktail
 
-            # Créer la commande dans la base de données
-            order = Order(
-                order_number=order_number,
-                customer_name=customer_name,
-                base=base,
-                alcohol=alcohol_type,
-                taste_types=', '.join(taste_types),
-                mood=mood,
-                cocktail_name=cocktail_name,
-                recipe=recipe
-            )
-            db.session.add(order)
-            db.session.commit()
+                Exemples de noms dans ce style :
+                - Le Phénix Enflammé
+                - L'Élixir des Elfes
+                - Le Dragon de Cristal
+                - La Potion Mystique
+                - Le Sortilège de la Licorne"""
 
-            # Rendre directement la page de confirmation
-            return render_template('confirm.html', 
-                                 customer_name=customer_name,
-                                 order_number=order_number,
-                                 recipe=recipe)
+                name_response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "Tu es un expert en création de noms de cocktails fantastiques. Crée des noms courts, créatifs et mémorables inspirés de la fantasy et de la science-fiction."},
+                        {"role": "user", "content": name_prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=50
+                )
+
+                cocktail_name = name_response.choices[0].message.content.strip()
+                cocktails.append({
+                    'name': cocktail_name,
+                    'spirit': spirit,
+                    'recipe': recipe
+                })
+
+            # Générer un numéro de commande temporaire
+            temp_order_number = generate_order_number()
+
+            # Stocker les informations temporairement dans la session
+            session_data = {
+                'customer_name': customer_name,
+                'alcohol_type': alcohol_type,
+                'base': base,
+                'taste_types': taste_types,
+                'mood': mood,
+                'temp_order_number': temp_order_number,
+                'cocktails': cocktails
+            }
+
+            return render_template('select_cocktail.html', 
+                                session_data=session_data)
         except Exception as e:
-            print(f"Erreur lors de la création de la commande : {str(e)}")
-            flash('Une erreur est survenue lors de la création de la commande.', 'error')
+            print(f"Erreur lors de la génération des cocktails : {str(e)}")
+            flash('Une erreur est survenue lors de la génération des cocktails.', 'error')
             return redirect(url_for('index'))
 
     return render_template('index.html')
+
+@app.route('/confirm_selection', methods=['POST'])
+def confirm_selection():
+    try:
+        cocktail_index = int(request.form.get('cocktail_index'))
+        customer_name = request.form.get('customer_name')
+        alcohol_type = request.form.get('alcohol_type')
+        base = request.form.get('base')
+        taste_types = request.form.get('taste_types').split(',')
+        mood = request.form.get('mood')
+        temp_order_number = request.form.get('temp_order_number')
+        cocktails = eval(request.form.get('cocktails'))
+
+        selected_cocktail = cocktails[cocktail_index]
+
+        # Créer la commande dans la base de données
+        order = Order(
+            order_number=temp_order_number,
+            customer_name=customer_name,
+            base=base,
+            alcohol=alcohol_type,
+            taste_types=', '.join(taste_types),
+            mood=mood,
+            cocktail_name=selected_cocktail['name'],
+            recipe=selected_cocktail['recipe']
+        )
+        db.session.add(order)
+        db.session.commit()
+
+        return render_template('confirm.html', 
+                             customer_name=customer_name,
+                             order_number=temp_order_number,
+                             recipe=selected_cocktail['recipe'])
+    except Exception as e:
+        print(f"Erreur lors de la confirmation de la sélection : {str(e)}")
+        flash('Une erreur est survenue lors de la confirmation de la commande.', 'error')
+        return redirect(url_for('index'))
 
 @app.route('/dashboard')
 def dashboard():
@@ -288,6 +354,28 @@ def update_status(order_number):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/get_orders')
+def get_orders():
+    try:
+        orders = Order.query.order_by(Order.created_at.desc()).all()
+        orders_data = []
+        for order in orders:
+            orders_data.append({
+                'order_number': order.order_number,
+                'customer_name': order.customer_name,
+                'alcohol': order.alcohol,
+                'base': order.base,
+                'taste_types': order.taste_types,
+                'mood': order.mood,
+                'cocktail_name': order.cocktail_name,
+                'recipe': order.recipe,
+                'completed': order.completed,
+                'created_at': order.created_at.isoformat()
+            })
+        return jsonify(orders_data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True) 

@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Choisissez votre cocktail - Bar Utopia{% endblock %}
+
+{% block content %}
+<div class="selection-container">
+    <h1>Choisissez votre cocktail</h1>
+    <p class="subtitle">Voici 3 propositions personnalisées pour vous, {{ session_data.customer_name }}</p>
+
+    <div class="cocktails-grid">
+        {% for cocktail in session_data.cocktails %}
+        <div class="cocktail-card">
+            <div class="cocktail-header">
+                <h2>{{ cocktail.name }}</h2>
+                <span class="spirit-badge">{{ cocktail.spirit }}</span>
+            </div>
+            
+            <div class="recipe-details">
+                <div class="recipe-section">
+                    <h3>🥃 Ingrédients</h3>
+                    <div class="ingredients-list">
+                        {{ cocktail.recipe.split('🥃 Ingrédients :')[1].split('🧪 Préparation :')[0]|safe }}
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('confirm_selection') }}">
+                <input type="hidden" name="cocktail_index" value="{{ loop.index0 }}">
+                <input type="hidden" name="customer_name" value="{{ session_data.customer_name }}">
+                <input type="hidden" name="alcohol_type" value="{{ session_data.alcohol_type }}">
+                <input type="hidden" name="base" value="{{ session_data.base }}">
+                <input type="hidden" name="taste_types" value="{{ session_data.taste_types|join(',') }}">
+                <input type="hidden" name="mood" value="{{ session_data.mood }}">
+                <input type="hidden" name="temp_order_number" value="{{ session_data.temp_order_number }}">
+                <input type="hidden" name="cocktails" value="{{ session_data.cocktails }}">
+                <button type="submit" class="select-btn">Choisir ce cocktail</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.selection-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    color: var(--primary);
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 30px;
+}
+
+.cocktails-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.cocktail-card {
+    background: var(--surface);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.cocktail-card:hover {
+    transform: translateY(-5px);
+}
+
+.cocktail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.cocktail-header h2 {
+    color: var(--primary);
+    margin: 0;
+    font-size: 1.5em;
+}
+
+.spirit-badge {
+    background: var(--primary);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.recipe-details {
+    margin-bottom: 25px;
+}
+
+.recipe-section {
+    margin-bottom: 20px;
+}
+
+.recipe-section h3 {
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.ingredients-list {
+    color: var(--text-secondary);
+    font-size: 0.95em;
+    line-height: 1.5;
+    white-space: pre-line;
+}
+
+.select-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.3s ease;
+}
+
+.select-btn:hover {
+    background: var(--primary-dark);
+}
+
+@media (max-width: 768px) {
+    .cocktails-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .cocktail-card {
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %} 
