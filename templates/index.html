@@ -46,35 +46,49 @@
                 </div>
             </div>
             <input type="hidden" name="alcohol_type" id="alcohol_type">
-
-            <div class="form-group" id="specific_spirit_group" style="display: none;">
-                <h3>Voulez-vous choisir un alcool spécifique ?</h3>
-                <div class="radio-group">
-                    <label>
-                        <input type="radio" name="choose_specific" value="yes"> Oui
-                    </label>
-                    <label>
-                        <input type="radio" name="choose_specific" value="no" checked> Non
-                    </label>
-                </div>
-            </div>
-
-            <div class="form-group" id="specific_spirit_select" style="display: none;">
-                <h3>Choisissez votre alcool</h3>
-                <div class="options-grid" id="specific_spirits_grid">
-                    <!-- Les options seront remplies dynamiquement -->
-                </div>
-                <input type="hidden" name="specific_spirit" id="specific_spirit">
-            </div>
-
             <div class="nav-buttons">
                 <button type="button" class="back-btn" onclick="prevStep(2)">Retour</button>
                 <button type="button" class="next-btn" onclick="nextStep(2)">Suivant</button>
             </div>
         </div>
 
-        <!-- Étape 3 : Goûts -->
+        <!-- Étape 3 : Choix de l'alcool spécifique -->
         <div class="form-step" id="step3">
+            <h2>Voulez-vous choisir un alcool spécifique ?</h2>
+            <div class="choice-grid">
+                <div class="choice-card" onclick="selectChoice('yes')">
+                    <img src="{{ url_for('static', filename='icons/specific.svg') }}" alt="Oui">
+                    <span>Oui, je veux choisir</span>
+                    <small>Je vais sélectionner un alcool précis</small>
+                </div>
+                <div class="choice-card" onclick="selectChoice('no')">
+                    <img src="{{ url_for('static', filename='icons/random.svg') }}" alt="Non">
+                    <span>Non, surprise-moi</span>
+                    <small>Je laisse le choix au barman</small>
+                </div>
+            </div>
+            <input type="hidden" name="choose_specific" id="choose_specific">
+            <div class="nav-buttons">
+                <button type="button" class="back-btn" onclick="prevStep(3)">Retour</button>
+                <button type="button" class="next-btn" onclick="nextStep(3)">Suivant</button>
+            </div>
+        </div>
+
+        <!-- Étape 4 : Sélection de l'alcool spécifique -->
+        <div class="form-step" id="step4">
+            <h2>Choisissez votre alcool</h2>
+            <div class="options-grid" id="specific_spirits_grid">
+                <!-- Les options seront remplies dynamiquement -->
+            </div>
+            <input type="hidden" name="specific_spirit" id="specific_spirit">
+            <div class="nav-buttons">
+                <button type="button" class="back-btn" onclick="prevStep(4)">Retour</button>
+                <button type="button" class="next-btn" onclick="nextStep(4)">Suivant</button>
+            </div>
+        </div>
+
+        <!-- Étape 5 : Goûts -->
+        <div class="form-step" id="step5">
             <h2>Quels goûts préférez-vous ?</h2>
             <div class="taste-grid">
                 <div class="taste-option" onclick="toggleTaste(this, 'sucré')">
@@ -105,13 +119,13 @@
             <div id="selected-tastes"></div>
             <input type="hidden" name="taste_types" id="taste_types">
             <div class="nav-buttons">
-                <button type="button" class="back-btn" onclick="prevStep(3)">Retour</button>
-                <button type="button" class="next-btn" onclick="nextStep(3)">Suivant</button>
+                <button type="button" class="back-btn" onclick="prevStep(5)">Retour</button>
+                <button type="button" class="next-btn" onclick="nextStep(5)">Suivant</button>
             </div>
         </div>
 
-        <!-- Étape 4 : Humeur -->
-        <div class="form-step" id="step4">
+        <!-- Étape 6 : Humeur -->
+        <div class="form-step" id="step6">
             <h2>Quelle est votre humeur ?</h2>
             <div class="mood-grid">
                 <div class="mood-option" onclick="selectOption('mood', 'festif', this)">
@@ -133,7 +147,7 @@
             </div>
             <input type="hidden" name="mood" id="mood">
             <div class="nav-buttons">
-                <button type="button" class="back-btn" onclick="prevStep(4)">Retour</button>
+                <button type="button" class="back-btn" onclick="prevStep(6)">Retour</button>
                 <button type="submit" class="submit-btn">Créer mon cocktail</button>
             </div>
         </div>
@@ -149,6 +163,11 @@ function nextStep(step) {
         document.getElementById(`step${step}`).classList.remove('active');
         document.getElementById(`step${step + 1}`).classList.add('active');
         currentStep = step + 1;
+
+        // Si on arrive à l'étape 4 et que l'utilisateur a choisi "yes", on met à jour les options d'alcool
+        if (step === 3 && document.getElementById('choose_specific').value === 'yes') {
+            updateSpiritOptions();
+        }
     }
 }
 
@@ -165,6 +184,14 @@ function validateStep(step) {
         case 2:
             return document.getElementById('alcohol_type').value !== '';
         case 3:
+            return document.getElementById('choose_specific').value !== '';
+        case 4:
+            const chooseSpecific = document.getElementById('choose_specific').value;
+            if (chooseSpecific === 'yes') {
+                return document.getElementById('specific_spirit').value !== '';
+            }
+            return true;
+        case 5:
             return selectedTastes.size > 0;
         default:
             return true;
@@ -223,17 +250,26 @@ function updateSelectedTastes() {
     ).join('');
 }
 
-document.querySelectorAll('input[name="choose_specific"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-        const specificSelect = document.getElementById('specific_spirit_select');
-        if (this.value === 'yes') {
-            specificSelect.style.display = 'block';
-            updateSpiritOptions();
-        } else {
-            specificSelect.style.display = 'none';
-        }
+function selectChoice(value) {
+    document.getElementById('choose_specific').value = value;
+    
+    // Retirer la classe selected de tous les éléments du même groupe
+    document.querySelectorAll('.choice-card').forEach(el => {
+        el.classList.remove('selected');
     });
-});
+    
+    // Ajouter la classe selected à l'élément cliqué
+    event.currentTarget.classList.add('selected');
+
+    // Si "Oui" est sélectionné, passer à l'étape suivante
+    if (value === 'yes') {
+        nextStep(3);
+    } else {
+        // Si "Non" est sélectionné, passer directement à l'étape 5
+        nextStep(3);
+        nextStep(4);
+    }
+}
 
 function updateSpiritOptions() {
     const alcoholType = document.getElementById('alcohol_type').value;
@@ -241,10 +277,10 @@ function updateSpiritOptions() {
     specificGrid.innerHTML = '';
 
     const spirits = {
-        'blanc': ['Vodka', 'Gin', 'Rhum blanc', 'Tequila', 'Mezcal'],
-        'brun': ['Whisky', 'Rhum brun', 'Cognac', 'Armagnac', 'Bourbon'],
-        'liqueur': ['Amaretto', 'Baileys', 'Cointreau', 'Grand Marnier', 'Kahlua'],
-        'amere': ['Campari', 'Aperol', 'Fernet', 'Suze', 'Amer Picon']
+        'blanc': ['Vodka', 'Gin', 'Rhum blanc', 'Tequila', 'Mezcal', 'Pisco', 'Grappa', 'Eau-de-vie'],
+        'brun': ['Whisky', 'Rhum brun', 'Cognac', 'Armagnac', 'Bourbon', 'Rye', 'Scotch', 'Irish Whiskey'],
+        'liqueur': ['Amaretto', 'Baileys', 'Cointreau', 'Grand Marnier', 'Kahlua', 'Chartreuse', 'Limoncello', 'Midori'],
+        'amere': ['Campari', 'Aperol', 'Fernet', 'Suze', 'Amer Picon', 'Cynar', 'Bitter', 'Angostura']
     };
 
     if (spirits[alcoholType]) {
