@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Commande Confirmée - Bar Utopia{% endblock %}
+
+{% block content %}
+<div class="confirmation-container">
+    <div class="confirmation-card">
+        <div class="success-animation">
+            <div class="checkmark">
+                <svg class="checkmark-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                    <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
+            </div>
+        </div>
+        
+        <h1>Commande Confirmée ! 🎉</h1>
+        <p class="greeting">Merci {{ customer_name }} !</p>
+        
+        <div class="order-info">
+            <p class="order-number">Votre numéro de commande : <span>{{ order_number }}</span></p>
+            <p class="order-status">Votre cocktail est en préparation... 🍸</p>
+        </div>
+
+        <div class="next-steps">
+            <p>Notre expert barman crée votre cocktail personnalisé avec soin.</p>
+            <p>Un serveur vous l'apportera sous peu.</p>
+            <p>En attendant, profitez de l'ambiance ! 🎵</p>
+        </div>
+
+        <a href="{{ url_for('index') }}" class="new-order-btn">Commander un autre cocktail</a>
+    </div>
+</div>
+
+<style>
+.confirmation-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--background), var(--surface));
+}
+
+.confirmation-card {
+    background: var(--surface);
+    border-radius: 30px;
+    padding: 40px;
+    text-align: center;
+    max-width: 600px;
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.5s ease-out;
+}
+
+.success-animation {
+    margin-bottom: 30px;
+}
+
+.checkmark {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+}
+
+.checkmark-circle {
+    stroke: var(--primary);
+    stroke-width: 2;
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark-check {
+    stroke: var(--primary);
+    stroke-width: 2;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+}
+
+h1 {
+    color: var(--primary);
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(255, 105, 180, 0.3);
+}
+
+.greeting {
+    font-size: 1.5em;
+    color: var(--text-primary);
+    margin-bottom: 30px;
+}
+
+.order-info {
+    background: var(--surface-dark);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 30px 0;
+}
+
+.order-number {
+    font-size: 1.2em;
+    color: var(--text-secondary);
+}
+
+.order-number span {
+    color: var(--primary);
+    font-weight: bold;
+    font-size: 1.3em;
+}
+
+.order-status {
+    color: var(--text-primary);
+    font-size: 1.1em;
+    margin-top: 10px;
+}
+
+.next-steps {
+    margin: 30px 0;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.next-steps p {
+    margin: 10px 0;
+}
+
+.new-order-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    padding: 15px 30px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.new-order-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 105, 180, 0.4);
+}
+
+@keyframes stroke {
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .confirmation-card {
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 2em;
+    }
+
+    .greeting {
+        font-size: 1.2em;
+    }
+}
+</style>
+{% endblock %} 

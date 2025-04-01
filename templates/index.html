@@ -3,231 +3,403 @@
 {% block title %}Commander un Cocktail - Bar Utopia{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1>Créez Votre Cocktail Personnalisé</h1>
+<div class="kiosk-container">
+    <div class="kiosk-header">
+        <h1>Créez Votre Cocktail</h1>
+        <p class="subtitle">Personnalisez votre boisson en quelques touches</p>
+    </div>
 
-    <form method="POST" class="order-form">
-        <div class="form-group">
-            <label for="customer_name">Votre nom</label>
-            <input type="text" id="customer_name" name="customer_name" required>
+    <form method="POST" class="kiosk-form">
+        <!-- Étape 1 : Nom -->
+        <div class="form-step active" id="step1">
+            <h2>Quel est votre nom ?</h2>
+            <div class="input-container">
+                <input type="text" id="customer_name" name="customer_name" required 
+                       class="kiosk-input" placeholder="Entrez votre nom">
+            </div>
+            <button type="button" class="next-btn" onclick="nextStep(1)">Suivant</button>
         </div>
 
-        <div class="form-group">
-            <label for="alcohol_type">Type d'alcool souhaité</label>
-            <select id="alcohol_type" name="alcohol_type" required>
-                <option value="">Sélectionnez un type d'alcool</option>
-                <option value="blanc">Alcool Blanc</option>
-                <option value="brun">Alcool Brun</option>
-                <option value="liqueur">Liqueur</option>
-                <option value="amere">Amer</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="base">Alcool spécifique (optionnel)</label>
-            <select id="base" name="base">
-                <option value="">Aucun alcool spécifique</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label>Type(s) de goût souhaité(s)</label>
-            <div class="taste-options">
-                <div class="taste-option">
-                    <input type="checkbox" id="taste_sucre" name="taste_types" value="sucré">
-                    <label for="taste_sucre">Sucré</label>
+        <!-- Étape 2 : Type d'alcool -->
+        <div class="form-step" id="step2">
+            <h2>Choisissez votre type d'alcool</h2>
+            <div class="options-grid">
+                <div class="option-card" onclick="selectOption('alcohol_type', 'blanc', this)">
+                    <img src="{{ url_for('static', filename='icons/white-spirits.svg') }}" alt="Alcools blancs">
+                    <span>Alcools Blancs</span>
+                    <small>Vodka, Gin, etc.</small>
                 </div>
-                <div class="taste-option">
-                    <input type="checkbox" id="taste_acide" name="taste_types" value="acide">
-                    <label for="taste_acide">Acide</label>
+                <div class="option-card" onclick="selectOption('alcohol_type', 'brun', this)">
+                    <img src="{{ url_for('static', filename='icons/brown-spirits.svg') }}" alt="Alcools bruns">
+                    <span>Alcools Bruns</span>
+                    <small>Whisky, Rhum, etc.</small>
                 </div>
-                <div class="taste-option">
-                    <input type="checkbox" id="taste_amer" name="taste_types" value="amer">
-                    <label for="taste_amer">Amer</label>
+                <div class="option-card" onclick="selectOption('alcohol_type', 'liqueur', this)">
+                    <img src="{{ url_for('static', filename='icons/liqueur.svg') }}" alt="Liqueurs">
+                    <span>Liqueurs</span>
+                    <small>Baileys, Cointreau, etc.</small>
                 </div>
-                <div class="taste-option">
-                    <input type="checkbox" id="taste_fruite" name="taste_types" value="fruité">
-                    <label for="taste_fruite">Fruité</label>
+                <div class="option-card" onclick="selectOption('alcohol_type', 'amere', this)">
+                    <img src="{{ url_for('static', filename='icons/bitter.svg') }}" alt="Amers">
+                    <span>Amers</span>
+                    <small>Campari, Aperol, etc.</small>
                 </div>
-                <div class="taste-option">
-                    <input type="checkbox" id="taste_frais" name="taste_types" value="frais">
-                    <label for="taste_frais">Frais</label>
-                </div>
-                <div class="taste-option">
-                    <input type="checkbox" id="taste_epice" name="taste_types" value="épicé">
-                    <label for="taste_epice">Épicé</label>
-                </div>
+            </div>
+            <input type="hidden" name="alcohol_type" id="alcohol_type">
+            <div class="nav-buttons">
+                <button type="button" class="back-btn" onclick="prevStep(2)">Retour</button>
+                <button type="button" class="next-btn" onclick="nextStep(2)">Suivant</button>
             </div>
         </div>
 
-        <div class="form-group">
-            <label for="mood">Votre humeur (optionnel)</label>
-            <select id="mood" name="mood">
-                <option value="">Pas d'humeur particulière</option>
-                <option value="joyeux">Joyeux</option>
-                <option value="triste">Triste</option>
-                <option value="energique">Énergique</option>
-                <option value="calme">Calme</option>
-                <option value="romantique">Romantique</option>
-                <option value="nostalgique">Nostalgique</option>
-            </select>
+        <!-- Étape 3 : Goûts -->
+        <div class="form-step" id="step3">
+            <h2>Quels goûts préférez-vous ?</h2>
+            <div class="taste-grid">
+                <div class="taste-option" onclick="toggleTaste(this, 'sucré')">
+                    <img src="{{ url_for('static', filename='icons/sweet.svg') }}" alt="Sucré">
+                    <span>Sucré</span>
+                </div>
+                <div class="taste-option" onclick="toggleTaste(this, 'acide')">
+                    <img src="{{ url_for('static', filename='icons/sour.svg') }}" alt="Acide">
+                    <span>Acide</span>
+                </div>
+                <div class="taste-option" onclick="toggleTaste(this, 'amer')">
+                    <img src="{{ url_for('static', filename='icons/bitter-taste.svg') }}" alt="Amer">
+                    <span>Amer</span>
+                </div>
+                <div class="taste-option" onclick="toggleTaste(this, 'frais')">
+                    <img src="{{ url_for('static', filename='icons/fresh.svg') }}" alt="Frais">
+                    <span>Frais</span>
+                </div>
+                <div class="taste-option" onclick="toggleTaste(this, 'épicé')">
+                    <img src="{{ url_for('static', filename='icons/spicy.svg') }}" alt="Épicé">
+                    <span>Épicé</span>
+                </div>
+                <div class="taste-option" onclick="toggleTaste(this, 'fruité')">
+                    <img src="{{ url_for('static', filename='icons/fruity.svg') }}" alt="Fruité">
+                    <span>Fruité</span>
+                </div>
+            </div>
+            <div id="selected-tastes"></div>
+            <input type="hidden" name="taste_types" id="taste_types">
+            <div class="nav-buttons">
+                <button type="button" class="back-btn" onclick="prevStep(3)">Retour</button>
+                <button type="button" class="next-btn" onclick="nextStep(3)">Suivant</button>
+            </div>
         </div>
 
-        <button type="submit" class="btn">Créer mon cocktail</button>
+        <!-- Étape 4 : Humeur -->
+        <div class="form-step" id="step4">
+            <h2>Quelle est votre humeur ?</h2>
+            <div class="mood-grid">
+                <div class="mood-option" onclick="selectOption('mood', 'festif', this)">
+                    <img src="{{ url_for('static', filename='icons/party.svg') }}" alt="Festif">
+                    <span>Festif</span>
+                </div>
+                <div class="mood-option" onclick="selectOption('mood', 'relax', this)">
+                    <img src="{{ url_for('static', filename='icons/relax.svg') }}" alt="Relax">
+                    <span>Relax</span>
+                </div>
+                <div class="mood-option" onclick="selectOption('mood', 'romantique', this)">
+                    <img src="{{ url_for('static', filename='icons/romantic.svg') }}" alt="Romantique">
+                    <span>Romantique</span>
+                </div>
+                <div class="mood-option" onclick="selectOption('mood', 'aventureux', this)">
+                    <img src="{{ url_for('static', filename='icons/adventure.svg') }}" alt="Aventureux">
+                    <span>Aventureux</span>
+                </div>
+            </div>
+            <input type="hidden" name="mood" id="mood">
+            <div class="nav-buttons">
+                <button type="button" class="back-btn" onclick="prevStep(4)">Retour</button>
+                <button type="submit" class="submit-btn">Créer mon cocktail</button>
+            </div>
+        </div>
     </form>
 </div>
 
 <script>
-const alcoholOptions = {
-    blanc: [
-        "Vodka",
-        "Gin",
-        "Tequila",
-        "Rhum blanc",
-        "Cachaça",
-        "Eau-de-vie de fruits"
-    ],
-    brun: [
-        "Whisky",
-        "Rhum brun",
-        "Cognac",
-        "Armagnac",
-        "Bourbon",
-        "Rye"
-    ],
-    liqueur: [
-        "Cointreau",
-        "Grand Marnier",
-        "Baileys",
-        "Amaretto",
-        "Kahlua",
-        "Chartreuse",
-        "St-Germain"
-    ],
-    amere: [
-        "Campari",
-        "Aperol",
-        "Fernet",
-        "Angostura",
-        "Suze",
-        "Picon"
-    ]
-};
+let currentStep = 1;
+const selectedTastes = new Set();
 
-// Mise à jour des options d'alcool
-document.getElementById('alcohol_type').addEventListener('change', function() {
-    const baseSelect = document.getElementById('base');
-    const selectedType = this.value;
-    
-    baseSelect.innerHTML = '<option value="">Aucun alcool spécifique</option>';
-    
-    if (selectedType && alcoholOptions[selectedType]) {
-        alcoholOptions[selectedType].forEach(option => {
-            const optionElement = document.createElement('option');
-            optionElement.value = option.toLowerCase();
-            optionElement.textContent = option;
-            baseSelect.appendChild(optionElement);
-        });
+function nextStep(step) {
+    if (validateStep(step)) {
+        document.getElementById(`step${step}`).classList.remove('active');
+        document.getElementById(`step${step + 1}`).classList.add('active');
+        currentStep = step + 1;
     }
-});
+}
 
-// Validation du formulaire
-document.querySelector('.order-form').addEventListener('submit', function(e) {
-    const tasteCheckboxes = document.querySelectorAll('input[name="taste_types"]:checked');
-    if (tasteCheckboxes.length === 0) {
-        e.preventDefault();
-        alert('Veuillez sélectionner au moins un type de goût');
+function prevStep(step) {
+    document.getElementById(`step${step}`).classList.remove('active');
+    document.getElementById(`step${step - 1}`).classList.add('active');
+    currentStep = step - 1;
+}
+
+function validateStep(step) {
+    switch(step) {
+        case 1:
+            return document.getElementById('customer_name').value.trim() !== '';
+        case 2:
+            return document.getElementById('alcohol_type').value !== '';
+        case 3:
+            return selectedTastes.size > 0;
+        default:
+            return true;
     }
-});
+}
+
+function selectOption(inputId, value, element) {
+    document.getElementById(inputId).value = value;
+    
+    // Retirer la classe selected de tous les éléments du même groupe
+    element.parentElement.querySelectorAll('.selected').forEach(el => {
+        el.classList.remove('selected');
+    });
+    
+    // Ajouter la classe selected à l'élément cliqué
+    element.classList.add('selected');
+}
+
+function toggleTaste(element, taste) {
+    element.classList.toggle('selected');
+    
+    if (selectedTastes.has(taste)) {
+        selectedTastes.delete(taste);
+    } else {
+        selectedTastes.add(taste);
+    }
+    
+    document.getElementById('taste_types').value = Array.from(selectedTastes).join(',');
+    updateSelectedTastes();
+}
+
+function updateSelectedTastes() {
+    const container = document.getElementById('selected-tastes');
+    container.innerHTML = Array.from(selectedTastes).map(taste => 
+        `<span class="taste-tag">${taste}</span>`
+    ).join('');
+}
 </script>
 
 <style>
-.order-form {
-    max-width: 600px;
+.kiosk-container {
+    max-width: 800px;
     margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-.form-group {
-    margin-bottom: 25px;
+.kiosk-header {
+    text-align: center;
+    margin-bottom: 40px;
 }
 
-.form-group label {
-    display: block;
+.kiosk-header h1 {
+    font-size: 2.5em;
+    color: var(--primary);
+    text-shadow: 0 0 10px rgba(255, 105, 180, 0.3);
     margin-bottom: 10px;
-    font-weight: 600;
-    color: var(--text-color);
 }
 
-.form-group select,
-.form-group input[type="text"] {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 1rem;
-    background-color: var(--card-background);
-    color: var(--text-color);
-    transition: all 0.3s ease;
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.2em;
+    margin-top: -10px;
 }
 
-.taste-options {
+.form-step {
+    display: none;
+    animation: fadeIn 0.3s ease-in-out;
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.form-step.active {
+    display: block;
+}
+
+.form-step h2 {
+    color: var(--primary);
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 1.8em;
+}
+
+.options-grid, .taste-grid, .mood-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
-    margin-top: 10px;
+    gap: 20px;
+    margin: 30px 0;
 }
 
-.taste-option {
+.option-card, .taste-option, .mood-option {
+    background: var(--surface-dark);
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.option-card:hover, .taste-option:hover, .mood-option:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(255, 105, 180, 0.2);
+    border-color: var(--primary);
+}
+
+.option-card.selected, .taste-option.selected, .mood-option.selected {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    box-shadow: 0 0 20px rgba(255, 105, 180, 0.3);
+}
+
+.option-card img, .taste-option img, .mood-option img {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.2));
+}
+
+.option-card span, .taste-option span, .mood-option span {
+    display: block;
+    font-weight: bold;
+    margin: 10px 0;
+    color: var(--text-primary);
+}
+
+.option-card small {
+    color: var(--text-secondary);
+    display: block;
+    font-size: 0.9em;
+}
+
+.nav-buttons {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-    background-color: var(--card-background);
-    transition: all 0.3s ease;
+    justify-content: space-between;
+    margin-top: 30px;
+    gap: 20px;
 }
 
-.taste-option:hover {
-    border-color: var(--secondary-color);
-    transform: translateY(-2px);
-}
-
-.taste-option input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-}
-
-.taste-option label {
-    margin: 0;
-    cursor: pointer;
-}
-
-.form-group select:focus,
-.form-group input[type="text"]:focus {
-    outline: none;
-    border-color: var(--secondary-color);
-    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
-}
-
-.btn {
-    width: 100%;
-    padding: 15px;
-    background-color: var(--secondary-color);
-    color: white;
+.next-btn, .back-btn, .submit-btn {
+    padding: 15px 30px;
+    border-radius: 12px;
     border: none;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 1.1em;
     cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    min-width: 150px;
+}
+
+.next-btn, .submit-btn {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
+}
+
+.back-btn {
+    background: var(--surface-dark);
+    color: var(--text-primary);
+    border: 2px solid var(--border);
+}
+
+.next-btn:hover, .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 105, 180, 0.4);
+}
+
+.back-btn:hover {
+    background: var(--surface);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.kiosk-input {
+    width: 100%;
+    padding: 20px;
+    font-size: 1.2em;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    margin: 20px 0;
+    background: var(--surface-dark);
+    color: var(--text-primary);
     transition: all 0.3s ease;
 }
 
-.btn:hover {
-    background-color: #c0392b;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.2);
+.kiosk-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+    outline: none;
+}
+
+.taste-tag {
+    display: inline-block;
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 8px 16px;
+    border-radius: 20px;
+    margin: 5px;
+    font-size: 0.9em;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(255, 105, 180, 0.2);
+}
+
+#selected-tastes {
+    margin: 20px 0;
+    text-align: center;
+}
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* Styles spécifiques pour iPad */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .kiosk-container {
+        max-width: 100%;
+        height: 100vh;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .options-grid, .taste-grid, .mood-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .option-card, .taste-option, .mood-option {
+        padding: 30px;
+    }
+
+    .next-btn, .back-btn, .submit-btn {
+        padding: 20px 40px;
+        font-size: 1.2em;
+    }
+
+    .kiosk-header h1 {
+        font-size: 3em;
+    }
+
+    .form-step h2 {
+        font-size: 2em;
+    }
 }
 </style>
 {% endblock %} 

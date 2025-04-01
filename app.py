@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from openai import OpenAI
@@ -168,8 +168,11 @@ def index():
             db.session.add(order)
             db.session.commit()
 
-            flash(f'Votre commande #{order_number} a été créée avec succès !', 'success')
-            return redirect(url_for('dashboard'))
+            # Rendre directement la page de confirmation
+            return render_template('confirm.html', 
+                                 customer_name=customer_name,
+                                 order_number=order_number,
+                                 recipe=recipe)
         except Exception as e:
             print(f"Erreur lors de la création de la commande : {str(e)}")
             flash('Une erreur est survenue lors de la création de la commande.', 'error')
@@ -179,8 +182,25 @@ def index():
 
 @app.route('/dashboard')
 def dashboard():
-    orders = Order.query.filter_by(completed=False).order_by(Order.created_at.desc()).all()
-    return render_template('dashboard.html', orders=orders)
+    orders = Order.query.order_by(Order.created_at.desc()).all()
+    
+    # Convertir les objets Order en dictionnaires
+    orders_data = []
+    for order in orders:
+        order_dict = {
+            'order_number': order.order_number,
+            'customer_name': order.customer_name,
+            'alcohol': order.alcohol,
+            'base': order.base,
+            'taste_types': order.taste_types,
+            'mood': order.mood,
+            'status': 'servi' if order.completed else 'en_attente',
+            'created_at': order.created_at.isoformat(),
+            'recipe': order.recipe
+        }
+        orders_data.append(order_dict)
+    
+    return render_template('dashboard.html', orders=orders_data)
 
 @app.route('/complete_order/<int:order_id>', methods=['POST'])
 def complete_order(order_id):
@@ -189,6 +209,85 @@ def complete_order(order_id):
     db.session.commit()
     flash('Commande marquée comme terminée !', 'success')
     return redirect(url_for('dashboard'))
+
+@app.route('/confirm', methods=['POST'])
+def confirm():
+    customer_name = request.form.get('customer_name')
+    alcohol_type = request.form.get('alcohol_type')
+    taste_types = request.form.get('taste_types', '').split(',')
+    mood = request.form.get('mood')
+    
+    # Générer un numéro de commande unique
+    order_number = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    
+    # Créer une nouvelle commande
+    order = Order(
+        customer_name=customer_name,
+        alcohol_type=alcohol_type,
+        taste_types=taste_types,
+        mood=mood,
+        order_number=order_number,
+        status='en_attente'
+    )
+    db.session.add(order)
+    db.session.commit()
+    
+    # Générer le cocktail avec GPT
+    prompt = f"""Crée une recette de cocktail avec les caractéristiques suivantes :
+    - Type d'alcool : {alcohol_type}
+    - Goûts : {', '.join(taste_types)}
+    - Humeur : {mood}
+
+    Format de réponse souhaité :
+        🍸 Nom du cocktail
+        🥃 Ingrédients :
+        - Liste des ingrédients avec quantités
+        🧪 Préparation :
+        - Étapes de préparation
+        🎯 Conseils de service :
+        - Conseils pour servir le cocktail
+        👅 Note de dégustation :
+        - Description du goût et des sensations"""
+
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Tu es un expert en cocktails créatifs. Crée des recettes détaillées et bien formatées avec des emojis."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.7,
+        max_tokens=500
+    )
+
+    recipe = response.choices[0].message.content
+    
+    return render_template('confirm.html', 
+                         customer_name=customer_name,
+                         order_number=order_number,
+                         recipe=recipe)
+
+@app.route('/clear_all_orders', methods=['POST'])
+def clear_all_orders():
+    try:
+        Order.query.delete()
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Toutes les commandes ont été supprimées'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/update_status/<order_number>', methods=['POST'])
+def update_status(order_number):
+    try:
+        order = Order.query.filter_by(order_number=order_number).first()
+        if order:
+            order.completed = True
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'Statut de la commande mis à jour'})
+        return jsonify({'success': False, 'message': 'Commande non trouvée'}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True) 

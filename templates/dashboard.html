@@ -3,240 +3,358 @@
 {% block title %}Tableau de Bord - Bar Utopia{% endblock %}
 
 {% block content %}
-<div class="card dashboard-card">
-    <h1>Tableau de Bord des Commandes</h1>
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Tableau de Bord</h1>
+        <button onclick="clearAllOrders()" class="clear-btn">
+            <span class="icon">🗑️</span>
+            <span class="text">Vider le tableau</span>
+        </button>
+    </div>
     
-    {% if orders %}
-        <div class="grid">
-            {% for order in orders %}
-                <div class="card cocktail-card">
-                    <div class="cocktail-header">
-                        <h2>{{ order.cocktail_name }}</h2>
-                        <span class="order-status">En attente</span>
-                    </div>
-                    
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <span class="info-icon">👤</span>
-                            <div class="info-content">
-                                <strong>Client</strong>
-                                <span>{{ order.customer_name }}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="info-item">
-                            <span class="info-icon">🥃</span>
-                            <div class="info-content">
-                                <strong>Base</strong>
-                                <span>{{ order.base }}</span>
-                            </div>
-                        </div>
-                        
-                        {% if order.alcohol %}
-                        <div class="info-item">
-                            <span class="info-icon">🍾</span>
-                            <div class="info-content">
-                                <strong>Alcool additionnel</strong>
-                                <span>{{ order.alcohol }}</span>
-                            </div>
-                        </div>
-                        {% endif %}
-                        
-                        <div class="info-item">
-                            <span class="info-icon">👅</span>
-                            <div class="info-content">
-                                <strong>Type de goût</strong>
-                                <span>{{ order.taste_type }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="recipe-container">
-                        <h3>Recette</h3>
-                        <div class="recipe">
-                            {{ order.recipe | safe }}
-                        </div>
-                    </div>
-
-                    <form action="{{ url_for('complete_order', order_id=order.id) }}" method="POST" class="action-form">
-                        <button type="submit" class="btn complete-btn">
-                            <span class="btn-icon">✅</span>
-                            <span class="btn-text">Marquer comme terminé</span>
-                        </button>
-                    </form>
-                </div>
-            {% endfor %}
+    <div class="orders-grid">
+        {% for order in orders %}
+        <div class="order-card" onclick="showOrderDetails('{{ order.order_number }}')">
+            <div class="order-header">
+                <span class="order-number">#{{ order.order_number }}</span>
+                <span class="order-status {{ order.status }}">{{ order.status }}</span>
+            </div>
+            <div class="order-info">
+                <p class="customer-name">{{ order.customer_name }}</p>
+                <p class="order-time">{{ order.created_at.split('T')[1][:5] }}</p>
+            </div>
+            <div class="order-details">
+                <span class="detail-tag">{{ order.alcohol }}</span>
+                {% if order.base %}
+                <span class="detail-tag">{{ order.base }}</span>
+                {% endif %}
+            </div>
         </div>
-    {% else %}
-        <div class="no-orders">
-            <span class="no-orders-icon">🍸</span>
-            <p>Aucune commande en attente</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal pour les détails de la commande -->
+<div id="orderModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div class="modal-header">
+            <h2>Commande #<span id="modalOrderNumber"></span></h2>
+            <span id="modalStatus" class="order-status"></span>
         </div>
-    {% endif %}
+        <div class="modal-body">
+            <div class="customer-info">
+                <p><strong>Client :</strong> <span id="modalCustomerName"></span></p>
+                <p><strong>Heure :</strong> <span id="modalTime"></span></p>
+            </div>
+            <div class="recipe-details">
+                <h3>Recette du Cocktail</h3>
+                <div id="modalRecipe" class="recipe-content"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="updateOrderStatus()" class="status-btn">Marquer comme servi</button>
+        </div>
+    </div>
 </div>
 
 <style>
-.dashboard-card {
-    padding: 30px;
+.dashboard-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-.cocktail-card {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.cocktail-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px var(--shadow-color);
-}
-
-.cocktail-header {
+.dashboard-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 15px;
-    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 30px;
 }
 
-.cocktail-header h2 {
+h1 {
+    color: var(--primary);
     margin: 0;
-    font-size: 1.5rem;
-    color: var(--text-color);
+    font-size: 2.5em;
 }
 
-.order-status {
-    background-color: #f1c40f;
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-.info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-}
-
-.info-item {
+.clear-btn {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px;
-    background-color: var(--hover-color);
-    border-radius: 12px;
-    transition: background-color 0.3s ease;
-}
-
-.info-item:hover {
-    background-color: var(--border-color);
-}
-
-.info-icon {
-    font-size: 1.5rem;
-}
-
-.info-content {
-    display: flex;
-    flex-direction: column;
-}
-
-.info-content strong {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-}
-
-.info-content span {
-    font-size: 1.1rem;
-    color: var(--text-color);
-    font-weight: 500;
-}
-
-.recipe-container {
-    background-color: var(--hover-color);
-    border-radius: 12px;
-    padding: 20px;
-}
-
-.recipe-container h3 {
-    margin-bottom: 15px;
-    color: var(--text-color);
-    font-size: 1.2rem;
-}
-
-.recipe {
-    font-family: 'Courier New', monospace;
-    line-height: 1.6;
-    color: var(--text-color);
-    white-space: pre-line;
-}
-
-.action-form {
-    margin-top: auto;
-}
-
-.complete-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     gap: 10px;
-    background-color: #27ae60;
-    padding: 15px;
+    background: var(--surface-dark);
+    color: var(--text-primary);
+    border: 2px solid var(--border);
+    padding: 12px 20px;
     border-radius: 12px;
-    font-size: 1.1rem;
+    cursor: pointer;
     font-weight: 600;
     transition: all 0.3s ease;
 }
 
-.complete-btn:hover {
-    background-color: #219a52;
-    transform: translateY(-2px);
+.clear-btn:hover {
+    background: var(--surface);
+    border-color: #ff4444;
+    color: #ff4444;
 }
 
-.btn-icon {
-    font-size: 1.2rem;
+.clear-btn .icon {
+    font-size: 1.2em;
 }
 
-.no-orders {
+.orders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.order-card {
+    background: var(--surface);
+    border-radius: 15px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid var(--border);
+}
+
+.order-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(255, 105, 180, 0.2);
+    border-color: var(--primary);
+}
+
+.order-header {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    padding: 40px;
-    text-align: center;
-    background-color: var(--hover-color);
-    border-radius: 16px;
-    gap: 15px;
+    margin-bottom: 15px;
 }
 
-.no-orders-icon {
-    font-size: 3rem;
+.order-number {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--primary);
 }
 
-.no-orders p {
-    font-size: 1.2rem;
+.order-status {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.order-status.en_attente {
+    background: rgba(255, 165, 0, 0.2);
+    color: #FFA500;
+}
+
+.order-status.servi {
+    background: rgba(50, 205, 50, 0.2);
+    color: #32CD32;
+}
+
+.order-info {
+    margin-bottom: 15px;
+}
+
+.customer-name {
+    font-size: 1.1em;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+}
+
+.order-time {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.order-details {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.detail-tag {
+    background: var(--surface-dark);
+    padding: 5px 10px;
+    border-radius: 10px;
+    font-size: 0.9em;
     color: var(--text-secondary);
 }
 
-@media (max-width: 768px) {
-    .dashboard-card {
-        padding: 20px;
-    }
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+}
 
-    .info-grid {
+.modal-content {
+    position: relative;
+    background: var(--surface);
+    margin: 50px auto;
+    padding: 30px;
+    width: 90%;
+    max-width: 800px;
+    border-radius: 20px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.close {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    font-size: 28px;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2 {
+    color: var(--primary);
+    margin: 0;
+}
+
+.customer-info {
+    margin-bottom: 30px;
+}
+
+.customer-info p {
+    margin: 10px 0;
+    color: var(--text-primary);
+}
+
+.recipe-details {
+    background: var(--surface-dark);
+    padding: 20px;
+    border-radius: 15px;
+    margin-top: 20px;
+}
+
+.recipe-details h3 {
+    color: var(--primary);
+    margin-bottom: 15px;
+}
+
+.recipe-content {
+    color: var(--text-primary);
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+.modal-footer {
+    margin-top: 30px;
+    text-align: right;
+}
+
+.status-btn {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.status-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
+}
+
+@media (max-width: 768px) {
+    .orders-grid {
         grid-template-columns: 1fr;
     }
 
-    .cocktail-card {
+    .modal-content {
+        margin: 20px;
         padding: 20px;
-    }
-
-    .cocktail-header h2 {
-        font-size: 1.3rem;
     }
 }
 </style>
+
+<script>
+function showOrderDetails(orderNumber) {
+    const modal = document.getElementById('orderModal');
+    const order = {{ orders|tojson|safe }}.find(o => o.order_number === orderNumber);
+    
+    if (order) {
+        document.getElementById('modalOrderNumber').textContent = order.order_number;
+        document.getElementById('modalStatus').textContent = order.status;
+        document.getElementById('modalStatus').className = `order-status ${order.status}`;
+        document.getElementById('modalCustomerName').textContent = order.customer_name;
+        document.getElementById('modalTime').textContent = new Date(order.created_at).toLocaleTimeString();
+        document.getElementById('modalRecipe').innerHTML = order.recipe.replace(/\n/g, '<br>');
+        
+        modal.style.display = 'block';
+    }
+}
+
+function updateOrderStatus() {
+    const orderNumber = document.getElementById('modalOrderNumber').textContent;
+    fetch(`/update_status/${orderNumber}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function clearAllOrders() {
+    if (confirm('Êtes-vous sûr de vouloir supprimer toutes les commandes ? Cette action est irréversible.')) {
+        fetch('/clear_all_orders', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur lors de la suppression des commandes : ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Erreur lors de la suppression des commandes : ' + error);
+        });
+    }
+}
+
+// Fermer le modal quand on clique sur la croix
+document.querySelector('.close').onclick = function() {
+    document.getElementById('orderModal').style.display = 'none';
+}
+
+// Fermer le modal quand on clique en dehors
+window.onclick = function(event) {
+    const modal = document.getElementById('orderModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
 {% endblock %} 
