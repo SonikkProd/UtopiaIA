@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Commander un Cocktail - Bar Utopia{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Créez Votre Cocktail Personnalisé</h1>
+
+    <form method="POST" class="order-form">
+        <div class="form-group">
+            <label for="customer_name">Votre nom</label>
+            <input type="text" id="customer_name" name="customer_name" required>
+        </div>
+
+        <div class="form-group">
+            <label for="alcohol_type">Type d'alcool souhaité</label>
+            <select id="alcohol_type" name="alcohol_type" required>
+                <option value="">Sélectionnez un type d'alcool</option>
+                <option value="blanc">Alcool Blanc</option>
+                <option value="brun">Alcool Brun</option>
+                <option value="liqueur">Liqueur</option>
+                <option value="amere">Amer</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="base">Alcool spécifique (optionnel)</label>
+            <select id="base" name="base">
+                <option value="">Aucun alcool spécifique</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Type(s) de goût souhaité(s)</label>
+            <div class="taste-options">
+                <div class="taste-option">
+                    <input type="checkbox" id="taste_sucre" name="taste_types" value="sucré">
+                    <label for="taste_sucre">Sucré</label>
+                </div>
+                <div class="taste-option">
+                    <input type="checkbox" id="taste_acide" name="taste_types" value="acide">
+                    <label for="taste_acide">Acide</label>
+                </div>
+                <div class="taste-option">
+                    <input type="checkbox" id="taste_amer" name="taste_types" value="amer">
+                    <label for="taste_amer">Amer</label>
+                </div>
+                <div class="taste-option">
+                    <input type="checkbox" id="taste_fruite" name="taste_types" value="fruité">
+                    <label for="taste_fruite">Fruité</label>
+                </div>
+                <div class="taste-option">
+                    <input type="checkbox" id="taste_frais" name="taste_types" value="frais">
+                    <label for="taste_frais">Frais</label>
+                </div>
+                <div class="taste-option">
+                    <input type="checkbox" id="taste_epice" name="taste_types" value="épicé">
+                    <label for="taste_epice">Épicé</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="mood">Votre humeur (optionnel)</label>
+            <select id="mood" name="mood">
+                <option value="">Pas d'humeur particulière</option>
+                <option value="joyeux">Joyeux</option>
+                <option value="triste">Triste</option>
+                <option value="energique">Énergique</option>
+                <option value="calme">Calme</option>
+                <option value="romantique">Romantique</option>
+                <option value="nostalgique">Nostalgique</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn">Créer mon cocktail</button>
+    </form>
+</div>
+
+<script>
+const alcoholOptions = {
+    blanc: [
+        "Vodka",
+        "Gin",
+        "Tequila",
+        "Rhum blanc",
+        "Cachaça",
+        "Eau-de-vie de fruits"
+    ],
+    brun: [
+        "Whisky",
+        "Rhum brun",
+        "Cognac",
+        "Armagnac",
+        "Bourbon",
+        "Rye"
+    ],
+    liqueur: [
+        "Cointreau",
+        "Grand Marnier",
+        "Baileys",
+        "Amaretto",
+        "Kahlua",
+        "Chartreuse",
+        "St-Germain"
+    ],
+    amere: [
+        "Campari",
+        "Aperol",
+        "Fernet",
+        "Angostura",
+        "Suze",
+        "Picon"
+    ]
+};
+
+// Mise à jour des options d'alcool
+document.getElementById('alcohol_type').addEventListener('change', function() {
+    const baseSelect = document.getElementById('base');
+    const selectedType = this.value;
+    
+    baseSelect.innerHTML = '<option value="">Aucun alcool spécifique</option>';
+    
+    if (selectedType && alcoholOptions[selectedType]) {
+        alcoholOptions[selectedType].forEach(option => {
+            const optionElement = document.createElement('option');
+            optionElement.value = option.toLowerCase();
+            optionElement.textContent = option;
+            baseSelect.appendChild(optionElement);
+        });
+    }
+});
+
+// Validation du formulaire
+document.querySelector('.order-form').addEventListener('submit', function(e) {
+    const tasteCheckboxes = document.querySelectorAll('input[name="taste_types"]:checked');
+    if (tasteCheckboxes.length === 0) {
+        e.preventDefault();
+        alert('Veuillez sélectionner au moins un type de goût');
+    }
+});
+</script>
+
+<style>
+.order-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.form-group select,
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: var(--card-background);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+}
+
+.taste-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.taste-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--card-background);
+    transition: all 0.3s ease;
+}
+
+.taste-option:hover {
+    border-color: var(--secondary-color);
+    transform: translateY(-2px);
+}
+
+.taste-option input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.taste-option label {
+    margin: 0;
+    cursor: pointer;
+}
+
+.form-group select:focus,
+.form-group input[type="text"]:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+}
+
+.btn {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.2);
+}
+</style>
+{% endblock %} 

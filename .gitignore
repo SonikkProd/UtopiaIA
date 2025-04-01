@@ -1,0 +1,43 @@
+# Fichiers Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environnement virtuel
+venv/
+ENV/
+
+# Base de données
+*.db
+*.sqlite3
+
+# Fichiers d'environnement
+.env
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Fichiers IDE
+.idea/
+.vscode/
+*.swp
+*.swo 

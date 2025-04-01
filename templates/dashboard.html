@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de Bord - Bar Utopia{% endblock %}
+
+{% block content %}
+<div class="card dashboard-card">
+    <h1>Tableau de Bord des Commandes</h1>
+    
+    {% if orders %}
+        <div class="grid">
+            {% for order in orders %}
+                <div class="card cocktail-card">
+                    <div class="cocktail-header">
+                        <h2>{{ order.cocktail_name }}</h2>
+                        <span class="order-status">En attente</span>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-icon">👤</span>
+                            <div class="info-content">
+                                <strong>Client</strong>
+                                <span>{{ order.customer_name }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="info-icon">🥃</span>
+                            <div class="info-content">
+                                <strong>Base</strong>
+                                <span>{{ order.base }}</span>
+                            </div>
+                        </div>
+                        
+                        {% if order.alcohol %}
+                        <div class="info-item">
+                            <span class="info-icon">🍾</span>
+                            <div class="info-content">
+                                <strong>Alcool additionnel</strong>
+                                <span>{{ order.alcohol }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="info-item">
+                            <span class="info-icon">👅</span>
+                            <div class="info-content">
+                                <strong>Type de goût</strong>
+                                <span>{{ order.taste_type }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recipe-container">
+                        <h3>Recette</h3>
+                        <div class="recipe">
+                            {{ order.recipe | safe }}
+                        </div>
+                    </div>
+
+                    <form action="{{ url_for('complete_order', order_id=order.id) }}" method="POST" class="action-form">
+                        <button type="submit" class="btn complete-btn">
+                            <span class="btn-icon">✅</span>
+                            <span class="btn-text">Marquer comme terminé</span>
+                        </button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-orders">
+            <span class="no-orders-icon">🍸</span>
+            <p>Aucune commande en attente</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.dashboard-card {
+    padding: 30px;
+}
+
+.cocktail-card {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cocktail-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px var(--shadow-color);
+}
+
+.cocktail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.cocktail-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--text-color);
+}
+
+.order-status {
+    background-color: #f1c40f;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background-color: var(--hover-color);
+    border-radius: 12px;
+    transition: background-color 0.3s ease;
+}
+
+.info-item:hover {
+    background-color: var(--border-color);
+}
+
+.info-icon {
+    font-size: 1.5rem;
+}
+
+.info-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-content strong {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.info-content span {
+    font-size: 1.1rem;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.recipe-container {
+    background-color: var(--hover-color);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.recipe-container h3 {
+    margin-bottom: 15px;
+    color: var(--text-color);
+    font-size: 1.2rem;
+}
+
+.recipe {
+    font-family: 'Courier New', monospace;
+    line-height: 1.6;
+    color: var(--text-color);
+    white-space: pre-line;
+}
+
+.action-form {
+    margin-top: auto;
+}
+
+.complete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background-color: #27ae60;
+    padding: 15px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.complete-btn:hover {
+    background-color: #219a52;
+    transform: translateY(-2px);
+}
+
+.btn-icon {
+    font-size: 1.2rem;
+}
+
+.no-orders {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+    background-color: var(--hover-color);
+    border-radius: 16px;
+    gap: 15px;
+}
+
+.no-orders-icon {
+    font-size: 3rem;
+}
+
+.no-orders p {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+    .dashboard-card {
+        padding: 20px;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cocktail-card {
+        padding: 20px;
+    }
+
+    .cocktail-header h2 {
+        font-size: 1.3rem;
+    }
+}
+</style>
+{% endblock %} 
